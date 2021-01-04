@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +15,11 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef _SEHANDLE_H
+#define _SEHANDLE_H
 
-#include <string>
-#include <vector>
+#include <selinux/android.h>
 
-#include "recovery_ui/device.h"
+extern struct selabel_handle* sehandle;
 
-Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
-std::string get_build_type();
+#endif

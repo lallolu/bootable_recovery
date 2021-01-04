@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +15,22 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef ANDROID_VOLD_NTFS_H
+#define ANDROID_VOLD_NTFS_H
+
+#include <utils/Errors.h>
 
 #include <string>
-#include <vector>
 
-#include "recovery_ui/device.h"
+namespace android {
+namespace volmgr {
+namespace ntfs {
 
-Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
-std::string get_build_type();
+status_t Mount(const std::string& source, const std::string& target, bool ro, bool remount,
+               bool executable, int ownerUid, int ownerGid, int permMask);
+
+}  // namespace ntfs
+}  // namespace volmgr
+}  // namespace android
+
+#endif

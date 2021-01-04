@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "volclient.h"
+#include "volume_manager/ResponseCode.h"
 
-#include <string>
-#include <vector>
+void VolumeClient::handleEvent(int code, const std::vector<std::string>& argv) {
+  // This client is only interested in volume addition/deletion
+  if (code != ResponseCode::VolumeDestroyed &&
+      code != ResponseCode::DiskScanned)
+    return;
 
-#include "recovery_ui/device.h"
+  printf("VolumeClient::handleEvent: code=%d, argv=<", code);
+  for (auto& arg : argv) {
+    printf("%s,", arg.c_str());
+  }
+  printf(">\n");
 
-Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
-std::string get_build_type();
+  mDevice->handleVolumeChanged();
+}

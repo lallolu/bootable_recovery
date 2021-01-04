@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +15,31 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef _NETLINKMANAGER_H
+#define _NETLINKMANAGER_H
 
-#include <string>
-#include <vector>
+#include <sysutils/NetlinkListener.h>
+#include <sysutils/SocketListener.h>
 
-#include "recovery_ui/device.h"
+class NetlinkHandler;
 
-Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
-std::string get_build_type();
+class NetlinkManager {
+  private:
+    static NetlinkManager* sInstance;
+
+  private:
+    NetlinkHandler* mHandler;
+    int mSock;
+
+  public:
+    virtual ~NetlinkManager();
+
+    bool start();
+    void stop();
+
+    static NetlinkManager* Instance();
+
+  private:
+    NetlinkManager();
+};
+#endif

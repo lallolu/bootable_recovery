@@ -61,6 +61,14 @@ class Device {
     REBOOT_FASTBOOT = 17,
     REBOOT_RECOVERY = 18,
     REBOOT_RESCUE = 19,
+    REBOOT_FROM_FASTBOOT = 20,
+    SHUTDOWN_FROM_FASTBOOT = 21,
+    //WIPE_SYSTEM = 100,
+    ENABLE_ADB = 101,
+    SWAP_SLOT = 102,
+    MENU_BASE = 200,
+    MENU_WIPE = 202,
+    MENU_ADVANCED = 203,
   };
 
   explicit Device(RecoveryUI* ui);
@@ -125,6 +133,9 @@ class Device {
   // Removes the menu item for the given action. This allows tailoring the menu based on the
   // runtime info, such as the availability of /cache or /sdcard.
   virtual void RemoveMenuItemForAction(Device::BuiltinAction action);
+  
+  // Return to the main menu
+  virtual void GoHome();
 
   // Called before and after we do a wipe data/factory reset operation, either via a reboot from the
   // main system with the --wipe_data flag, or when the user boots into recovery image manually and

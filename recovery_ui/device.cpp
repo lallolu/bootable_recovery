@@ -36,6 +36,8 @@ static std::vector<std::pair<std::string, Device::BuiltinAction>> g_menu_actions
   { "Wipe cache partition", Device::WIPE_CACHE },
   { "Mount /system", Device::MOUNT_SYSTEM },
   { "View recovery logs", Device::VIEW_RECOVERY_LOGS },
+  { "Enable ADB", Device::ENABLE_ADB },
+  { "Switch slot", Device::SWAP_SLOT },
   { "Run graphics test", Device::RUN_GRAPHICS_TEST },
   { "Run locale test", Device::RUN_LOCALE_TEST },
   { "Enter rescue", Device::ENTER_RESCUE },
@@ -61,6 +63,11 @@ void Device::RemoveMenuItemForAction(Device::BuiltinAction action) {
   CHECK(!g_menu_actions.empty());
 
   // Re-populate the menu items.
+  PopulateMenuItems();
+}
+
+void Device::GoHome() {
+  //current_menu_ = &g_main_actions;
   PopulateMenuItems();
 }
 

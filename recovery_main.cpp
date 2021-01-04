@@ -73,6 +73,10 @@ static bool IsDeviceUnlocked() {
   return "orange" == android::base::GetProperty("ro.boot.verifiedbootstate", "");
 }
 
+std::string get_build_type() {
+  return android::base::GetProperty("ro.build.type", "");
+}
+
 static void UiLogger(android::base::LogId /* id */, android::base::LogSeverity severity,
                      const char* /* tag */, const char* /* file */, unsigned int /* line */,
                      const char* message) {
@@ -446,6 +450,25 @@ int main(int argc, char** argv) {
 
   if (!IsRoDebuggable()) {
     device->RemoveMenuItemForAction(Device::ENTER_RESCUE);
+  }
+
+  if (get_build_type() != "eng") {
+    device->RemoveMenuItemForAction(Device::RUN_GRAPHICS_TEST);
+    device->RemoveMenuItemForAction(Device::RUN_LOCALE_TEST);
+    device->RemoveMenuItemForAction(Device::ENTER_RESCUE);
+  }
+  
+  if (get_build_type() != "userdebug") {
+    device->RemoveMenuItemForAction(Device::ENABLE_ADB);
+  }
+
+  if (get_build_type() == "user") {
+    //device->RemoveMenuItemForAction(Device::WIPE_SYSTEM);
+    device->RemoveMenuItemForAction(Device::MOUNT_SYSTEM);
+  }
+
+  if (!android::base::GetBoolProperty("ro.build.ab_update", false)) {
+    device->RemoveMenuItemForAction(Device::SWAP_SLOT);
   }
 
   ui->SetBackground(RecoveryUI::NONE);

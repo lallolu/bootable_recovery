@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2019 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +15,22 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef VOLMGR_F2FS_H
+#define VOLMGR_F2FS_H
+
+#include <utils/Errors.h>
 
 #include <string>
-#include <vector>
 
-#include "recovery_ui/device.h"
+namespace android {
+namespace volmgr {
+namespace f2fs {
 
-Device::BuiltinAction start_recovery(Device* device, const std::vector<std::string>& args);
-std::string get_build_type();
+status_t Mount(const std::string& source, const std::string& target, const std::string& opts = "",
+               bool trusted = false, bool portable = false);
+
+}  // namespace f2fs
+}  // namespace volmgr
+}  // namespace android
+
+#endif

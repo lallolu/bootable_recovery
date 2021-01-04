@@ -42,6 +42,10 @@
 #include <android-base/strings.h>
 #include <cutils/properties.h> /* for property_list */
 #include <fs_mgr/roots.h>
+#include <hardware/boot_control.h>
+#include <hardware/hardware.h>
+//#include <volume_manager/VolumeManager.h>
+#include <volume_manager/include/volume_manager/VolumeManager.h>
 #include <ziparchive/zip_archive.h>
 
 #include "bootloader_message/bootloader_message.h"
@@ -166,6 +170,61 @@ static bool yes_no(Device* device, const char* question1, const char* question2)
       headers, items, 0, true,
       std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
   return (chosen_item == 1);
+}
+
+bool ask_to_continue_unverified(Device* device) {
+  if (get_build_type() == "user") {
+    return false;
+  } else {
+    device->GetUI()->SetProgressType(RecoveryUI::EMPTY);
+    return yes_no(device, "Signature verification failed", "Install anyway?");
+  }
+}
+
+bool ask_to_continue_downgrade(Device* device) {
+  if (get_build_type() == "user") {
+    return false;
+  } else {
+    device->GetUI()->SetProgressType(RecoveryUI::EMPTY);
+    return yes_no(device, "This package will downgrade your system", "Install anyway?");
+  }
+}
+
+std::string get_chosen_slot(Device* device) {
+  std::vector<std::string> headers{ "Choose which slot to boot into on next boot." };
+  std::vector<std::string> items{ "A", "B" };
+  size_t chosen_item = device->GetUI()->ShowMenu(
+      headers, items, 0, true,
+      std::bind(&Device::HandleMenuKey, device, std::placeholders::_1, std::placeholders::_2));
+  if (chosen_item < 0)
+    return "";
+  return items[chosen_item];
+}
+
+int set_slot(Device* device) {
+  std::string slot = get_chosen_slot(device);
+  if (slot == "")
+    return 0;
+  const hw_module_t *hw_module;
+  boot_control_module_t *module;
+  int ret;
+  ret = hw_get_module("bootctrl", &hw_module);
+  if (ret != 0) {
+    device->GetUI()->Print("Error getting bootctrl module.\n");
+  } else {
+    module = (boot_control_module_t*) hw_module;
+    module->init(module);
+    int slot_number = 0;
+    if (slot == "B")
+      slot_number = 1;
+    if (module->setActiveBootSlot(module, slot_number))
+      device->GetUI()->Print("Error changing bootloader boot slot to %s.\n", slot.c_str());
+    else {
+      device->GetUI()->Print("Switched slot to %s.\n", slot.c_str());
+      device->GoHome();
+    }
+  }
+  return ret;
 }
 
 static bool ask_to_wipe_data(Device* device) {
@@ -405,8 +464,16 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
             : device->InvokeMenuItem(chosen_item);
 
     switch (chosen_action) {
-      case Device::NO_ACTION:
+      case Device::MENU_BASE:
+      case Device::MENU_WIPE:
+      case Device::MENU_ADVANCED:
+        //goto change_menu;
         break;
+        
+      case Device::REBOOT_FROM_FASTBOOT:    // Can not happen
+      case Device::SHUTDOWN_FROM_FASTBOOT:  // Can not happen
+      case Device::NO_ACTION:
+        break;        
 
       case Device::ENTER_FASTBOOT:
       case Device::ENTER_RECOVERY:
@@ -452,6 +519,16 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
         if (!ui->IsTextVisible()) return Device::NO_ACTION;
         break;
       }
+      
+      //case Device::WIPE_SYSTEM: {
+      //  save_current_log = true;
+      //  std::function<bool()> confirm_func = [&device]() {
+      //    return yes_no(device, "Format system?", "  THIS CAN NOT BE UNDONE!");
+      //  };
+      //  WipeSystem(ui, ui->IsTextVisible() ? confirm_func : nullptr);
+      //  if (!ui->IsTextVisible()) return Device::NO_ACTION;
+      //  break;
+      //}
 
       case Device::APPLY_ADB_SIDELOAD:
       case Device::APPLY_SDCARD:
@@ -494,6 +571,18 @@ static Device::BuiltinAction PromptAndWait(Device* device, InstallResult status)
 
       case Device::VIEW_RECOVERY_LOGS:
         choose_recovery_file(device);
+        break;
+
+      case Device::ENABLE_ADB:
+        android::base::SetProperty("ro.adb.secure.recovery", "0");
+        android::base::SetProperty("ctl.restart", "adbd");
+        device->RemoveMenuItemForAction(Device::ENABLE_ADB);
+        device->GoHome();
+        ui->Print("Enabled ADB.\n");
+        break;
+
+      case Device::SWAP_SLOT:
+        set_slot(device);
         break;
 
       case Device::RUN_GRAPHICS_TEST:
